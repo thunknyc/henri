@@ -82,12 +82,14 @@
            (sender metric millis "ms" options)))))))
 
 (defn trace-sender
-  ([stop] (trace-sender nil stop))
-  ([prefix stop]
-   (a/go
-     (let [log (statsd-logger prefix)]
-       (a/loop [[rec ch] (a/alts! [*trace-port* stop])]
-         (if rec
-           (do (when (= :exit (:event rec)) (log rec))
-               (recur (a/alts! [*trace-port* stop])))
-           (printfe "statsd trace sender stopped.\n")))))))
+  ([] (trace-sender nil))
+  ([prefix]
+   (let [stop (a/chan)]
+     (a/go
+       (let [log (statsd-logger prefix)]
+         (a/loop [[rec ch] (a/alts! [*trace-port* stop])]
+           (if rec
+             (do (when (= :exit (:event rec)) (log rec))
+                 (recur (a/alts! [*trace-port* stop])))
+             (printfe "statsd trace sender stopped.\n")))))
+     (fn [] (a/close! stop)))))

@@ -53,33 +53,16 @@
             (printfe "graphite logger network reset failed.\n")))))))
 
 (defn trace-sender
-  ([apikey stop] (trace-sender apikey stop nil))
-  ([apikey prefix stop]
-   (a/go
-     (let [log (graphite-logger apikey prefix)]
-       (a/loop [[rec ch] (a/alts! [*trace-port* stop])]
-         (if rec
-           (do (when (= :exit (:event rec)) (log rec))
-               (recur (a/alts! [*trace-port* stop])))
-           (printfe "graphite trace sender stopped.\n")))))))
+  ([apikey] (trace-sender apikey nil))
+  ([apikey prefix]
+   (let [stop (a/chan)]
+     (a/go
+       (let [log (graphite-logger apikey prefix)]
+         (a/loop [[rec ch] (a/alts! [*trace-port* stop])]
+           (if rec
+             (do (when (= :exit (:event rec)) (log rec))
+                 (recur (a/alts! [*trace-port* stop])))
+             (printfe "graphite trace sender stopped.\n")))))
+     (fn [] (a/close! stop)))))
 
-(comment
-  (defonce stop-sender (a/chan))
-  (defonce sender (trace-sender "ead729e8-3c0e-46b3-bda8-b79f261cbb2e"
-                                "test"
-                                stop-sender))
-
-  (defn add [& xs] (apply + xs))
-  (defn mult [& xs] (apply * xs))
-  (defn sum-squares [& xs] (apply add (map #(mult % %) xs)))
-
-  (trace-var #'add)
-  (trace-var #'mult)
-  (trace-var #'sum-squares)
-
-  (defn run-test []
-    (future
-      (doseq [i (range 36000)]
-        (apply sum-squares (range (rand-int 10000)))
-        (Thread/sleep 99)))))
  
