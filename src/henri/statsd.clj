@@ -75,7 +75,10 @@
      (fn [rec]
        (try
          (let [metric (stack->metric prefix (:stack rec))
-               millis (Math/ceil (* (:nanos rec) 0.001))]
+               millis (-> (:nanos rec)
+                          (* 0.000001)
+                          Math/ceil
+                          int)]
            (sender metric millis "ms" options)))))))
 
 (defn trace-sender
