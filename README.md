@@ -20,11 +20,10 @@ FIXME
 (defn mult [& xs] (apply * xs))
 (defn sum-squares [& xs] (apply add (map #(mult % %) xs)))
 
-#_(def stop-hostedgraphite-sender
+#_(def stop-hostedgraphite-sender!
     (hostedgraphite/trace-sender
-     "ead729e8-3c0e-46b3-bda8-b79f261cbb2e"
-     "test"
-     stop-hostgraphite))
+     HOSTEDGRAPHITE_KEY
+     "test"))
 
 (def stop-statsd-sender! (statsd/trace-sender "test"))
 
